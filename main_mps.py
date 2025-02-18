@@ -17,6 +17,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 from cgcnn.data import CIFData
 from cgcnn.data import collate_pool, get_train_val_test_loader
 from cgcnn.model import CrystalGraphConvNet
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser(description='Crystal Graph Convolutional Neural Networks')
 parser.add_argument('data_options', metavar='OPTIONS', nargs='+',
@@ -225,7 +226,10 @@ def train(train_loader, model, criterion, optimizer, epoch, normalizer):
     model.train()
 
     end = time.time()
-    for i, (input, target, _) in enumerate(train_loader):
+    # for i, (input, target, _) in enumerate(train_loader):
+    
+
+    for i, (input, target, _) in enumerate(tqdm(train_loader, desc="Training Progress")):
         # measure data loading time
         data_time.update(time.time() - end)
 
