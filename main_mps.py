@@ -18,6 +18,10 @@ from cgcnn.data import CIFData
 from cgcnn.data import collate_pool, get_train_val_test_loader
 from cgcnn.model import CrystalGraphConvNet
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
+
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+writer = SummaryWriter(log_dir)
 
 parser = argparse.ArgumentParser(description='Crystal Graph Convolutional Neural Networks')
 parser.add_argument('data_options', metavar='OPTIONS', nargs='+',
@@ -291,6 +295,8 @@ def train(train_loader, model, criterion, optimizer, epoch, normalizer):
                     epoch, i, len(train_loader), batch_time=batch_time,
                     data_time=data_time, loss=losses, mae_errors=mae_errors)
                 )
+                writer.add_scalar("Loss/train", loss.item(), epoch)
+                writer.add_scalar("MAE/train", mae_errors.val, epoch)
             else:
                 print('Epoch: [{0}][{1}/{2}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
@@ -306,6 +312,8 @@ def train(train_loader, model, criterion, optimizer, epoch, normalizer):
                     prec=precisions, recall=recalls, f1=fscores,
                     auc=auc_scores)
                 )
+                writer.add_scalar("Loss/train", loss.item(), epoch)
+                writer.add_scalar("MAE/train", mae_errors.val, epoch)
 
 
 def validate(val_loader, model, criterion, normalizer, test=False):
@@ -396,6 +404,8 @@ def validate(val_loader, model, criterion, normalizer, test=False):
                       'MAE {mae_errors.val:.3f} ({mae_errors.avg:.3f})'.format(
                     i, len(val_loader), batch_time=batch_time, loss=losses,
                     mae_errors=mae_errors))
+                writer.add_scalar("Loss/val", loss.item(), epoch)
+                writer.add_scalar("MAE/val", mae_errors.val, epoch)
             else:
                 print('Test: [{0}/{1}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
@@ -408,6 +418,8 @@ def validate(val_loader, model, criterion, normalizer, test=False):
                     i, len(val_loader), batch_time=batch_time, loss=losses,
                     accu=accuracies, prec=precisions, recall=recalls,
                     f1=fscores, auc=auc_scores))
+                writer.add_scalar("Loss/val", loss.item(), epoch)
+                writer.add_scalar("MAE/val", mae_errors.val, epoch)
 
     if test:
         star_label = '**'
