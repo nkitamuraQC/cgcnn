@@ -284,7 +284,7 @@ def train(train_loader, model, criterion, optimizer, epoch, normalizer):
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
-
+        x = len(train_loader) * epoch + i
         if i % args.print_freq == 0:
             if args.task == 'regression':
                 print('Epoch: [{0}][{1}/{2}]\t'
@@ -295,8 +295,8 @@ def train(train_loader, model, criterion, optimizer, epoch, normalizer):
                     epoch, i, len(train_loader), batch_time=batch_time,
                     data_time=data_time, loss=losses, mae_errors=mae_errors)
                 )
-                writer.add_scalar("Loss/train", loss.item(), epoch)
-                writer.add_scalar("MAE/train", mae_errors.val, epoch)
+                writer.add_scalar("Loss/train", loss.item(), x)
+                writer.add_scalar("MAE/train", mae_errors.val, x)
             else:
                 print('Epoch: [{0}][{1}/{2}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
@@ -312,8 +312,8 @@ def train(train_loader, model, criterion, optimizer, epoch, normalizer):
                     prec=precisions, recall=recalls, f1=fscores,
                     auc=auc_scores)
                 )
-                writer.add_scalar("Loss/train", loss.item(), epoch)
-                writer.add_scalar("MAE/train", mae_errors.val, epoch)
+                writer.add_scalar("Loss/train", loss.item(), x)
+                writer.add_scalar("MAE/train", mae_errors.val, x)
 
 
 def validate(val_loader, model, criterion, normalizer, test=False):
@@ -363,7 +363,7 @@ def validate(val_loader, model, criterion, normalizer, test=False):
         # compute output
         output = model(*input_var)
         loss = criterion(output, target_var)
-
+        
         # measure accuracy and record loss
         if args.task == 'regression':
             mae_error = mae(normalizer.denorm(output.data.cpu()), target)
@@ -396,6 +396,7 @@ def validate(val_loader, model, criterion, normalizer, test=False):
         batch_time.update(time.time() - end)
         end = time.time()
 
+        x = len(val_loader) * epoch + i
         if i % args.print_freq == 0:
             if args.task == 'regression':
                 print('Test: [{0}/{1}]\t'
@@ -404,8 +405,8 @@ def validate(val_loader, model, criterion, normalizer, test=False):
                       'MAE {mae_errors.val:.3f} ({mae_errors.avg:.3f})'.format(
                     i, len(val_loader), batch_time=batch_time, loss=losses,
                     mae_errors=mae_errors))
-                writer.add_scalar("Loss/val", loss.item(), epoch)
-                writer.add_scalar("MAE/val", mae_errors.val, epoch)
+                writer.add_scalar("Loss/val", loss.item(), x)
+                writer.add_scalar("MAE/val", mae_errors.val, x)
             else:
                 print('Test: [{0}/{1}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
@@ -418,8 +419,8 @@ def validate(val_loader, model, criterion, normalizer, test=False):
                     i, len(val_loader), batch_time=batch_time, loss=losses,
                     accu=accuracies, prec=precisions, recall=recalls,
                     f1=fscores, auc=auc_scores))
-                writer.add_scalar("Loss/val", loss.item(), epoch)
-                writer.add_scalar("MAE/val", mae_errors.val, epoch)
+                writer.add_scalar("Loss/val", loss.item(), x)
+                writer.add_scalar("MAE/val", mae_errors.val, x)
 
     if test:
         star_label = '**'
