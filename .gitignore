@@ -95,3 +95,6 @@ Local
 # .DS_Store
 .DS_Store
 ./root*
+./test_res*
+./best_model*
+./checkpoint*
