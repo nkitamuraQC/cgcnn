@@ -96,5 +96,5 @@ Local
 .DS_Store
 ./root*
 ./test_res*
-./best_model*
+./model_best*
 ./checkpoint*
