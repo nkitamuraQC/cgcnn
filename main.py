@@ -167,6 +167,8 @@ def main():
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
+    h_fea_len = 128
+    model.fc_out = nn.Linear(h_fea_len, 12)
     scheduler = MultiStepLR(optimizer, milestones=args.lr_milestones,
                             gamma=0.1)
 
