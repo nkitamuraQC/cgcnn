@@ -320,7 +320,7 @@ class CIFData(Dataset):
     @functools.lru_cache(maxsize=None)  # Cache loaded structures
     def __getitem__(self, idx):
         # _, cif_id, target = self.id_prop_data[idx]
-        _, cif_id, exx, eyy, ezz, exy, eyz, exz, exx, iyy, izz, ixy, iyz, ixz = self.id_prop_data[idx]
+        _, cif_id, exx, eyy, ezz, exy, eyz, exz, ixx, iyy, izz, ixy, iyz, ixz = self.id_prop_data[idx]
         crystal = Structure.from_file(os.path.join(self.root_dir,
                                                    cif_id+'.cif'))
         atom_fea = np.vstack([self.ari.get_atom_fea(crystal[i].specie.number)
@@ -350,5 +350,5 @@ class CIFData(Dataset):
         nbr_fea = torch.Tensor(nbr_fea)
         nbr_fea_idx = torch.LongTensor(nbr_fea_idx)
         # target = torch.Tensor([float(target)])
-        target = torch.Tensor([exx, eyy, ezz, exy, eyz, exz, exx, iyy, izz, ixy, iyz, ixz])
+        target = torch.Tensor([exx, eyy, ezz, exy, eyz, exz, ixx, iyy, izz, ixy, iyz, ixz])
         return (atom_fea, nbr_fea, nbr_fea_idx), target, cif_id
