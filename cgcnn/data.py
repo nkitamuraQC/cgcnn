@@ -320,38 +320,52 @@ class CIFData(Dataset):
     @functools.lru_cache(maxsize=None)  # Cache loaded structures
     def __getitem__(self, idx):
         # _, cif_id, target = self.id_prop_data[idx]
-        _, cif_id1, cif_id2, target = self.id_prop_data[idx]
+        cif_id1 = self.id_prop_data[idx]["cif_id_p"]
+        cif_id2 = self.id_prop_data[idx]["cif_id_r"], 
+        target = self.id_prop_data[idx]["act_e"]
         # _, cif_id, _, exx, eyy, ezz, exy, eyz, exz, ixx, iyy, izz, ixy, iyz, ixz = self.id_prop_data[idx]
         # print(exx, eyy, ezz, exy, eyz, exz, ixx, iyy, izz, ixy, iyz, ixz)
         # arr = list(map(float, [exx, eyy, ezz, exy, eyz, exz, ixx, iyy, izz, ixy, iyz, ixz]))
-        crystal = Structure.from_file(os.path.join(self.root_dir,
+        def get_data(cif_id):
+            crystal = Structure.from_file(os.path.join(self.root_dir,
                                                    cif_id+'.cif'))
-        atom_fea = np.vstack([self.ari.get_atom_fea(crystal[i].specie.number)
-                              for i in range(len(crystal))])
-        atom_fea = torch.Tensor(atom_fea)
-        all_nbrs = crystal.get_all_neighbors(self.radius, include_index=True)
-        all_nbrs = [sorted(nbrs, key=lambda x: x[1]) for nbrs in all_nbrs]
-        nbr_fea_idx, nbr_fea = [], []
-        for nbr in all_nbrs:
-            if len(nbr) < self.max_num_nbr:
-                warnings.warn('{} not find enough neighbors to build graph. '
-                              'If it happens frequently, consider increase '
-                              'radius.'.format(cif_id))
-                nbr_fea_idx.append(list(map(lambda x: x[2], nbr)) +
+            atom_fea = np.vstack([self.ari.get_atom_fea(crystal[i].specie.number)
+                                  for i in range(len(crystal))])
+            atom_fea = torch.Tensor(atom_fea)
+            all_nbrs = crystal.get_all_neighbors(self.radius, include_index=True)
+            all_nbrs = [sorted(nbrs, key=lambda x: x[1]) for nbrs in all_nbrs]
+            nbr_fea_idx, nbr_fea = [], []
+            for nbr in all_nbrs:
+                if len(nbr) < self.max_num_nbr:
+                    warnings.warn('{} not find enough neighbors to build graph. '
+                                  'If it happens frequently, consider increase '
+                                  'radius.'.format(cif_id))
+                    nbr_fea_idx.append(list(map(lambda x: x[2], nbr)) +
                                    [0] * (self.max_num_nbr - len(nbr)))
-                nbr_fea.append(list(map(lambda x: x[1], nbr)) +
+                    nbr_fea.append(list(map(lambda x: x[1], nbr)) +
                                [self.radius + 1.] * (self.max_num_nbr -
                                                      len(nbr)))
-            else:
-                nbr_fea_idx.append(list(map(lambda x: x[2],
+                else:
+                    nbr_fea_idx.append(list(map(lambda x: x[2],
                                             nbr[:self.max_num_nbr])))
-                nbr_fea.append(list(map(lambda x: x[1],
+                    nbr_fea.append(list(map(lambda x: x[1],
                                         nbr[:self.max_num_nbr])))
-        nbr_fea_idx, nbr_fea = np.array(nbr_fea_idx), np.array(nbr_fea)
-        nbr_fea = self.gdf.expand(nbr_fea)
-        atom_fea = torch.Tensor(atom_fea)
-        nbr_fea = torch.Tensor(nbr_fea)
-        nbr_fea_idx = torch.LongTensor(nbr_fea_idx)
-        # target = torch.Tensor([float(target)])
-        target = torch.Tensor(arr)
-        return (atom_fea, nbr_fea, nbr_fea_idx), target, cif_id
+            nbr_fea_idx, nbr_fea = np.array(nbr_fea_idx), np.array(nbr_fea)
+            nbr_fea = self.gdf.expand(nbr_fea)
+            atom_fea = torch.Tensor(atom_fea)
+            nbr_fea = torch.Tensor(nbr_fea)
+            nbr_fea_idx = torch.LongTensor(nbr_fea_idx)
+            # target = torch.Tensor([float(target)])
+            target = torch.Tensor(arr)
+            return (atom_fea, nbr_fea, nbr_fea_idx), target, cif_id
+
+        (atom_fea1, nbr_fea1, nbr_fea_idx1), target, cif_id1 = get_data(cif_data1)
+        (atom_fea2, nbr_fea2, nbr_fea_idx2), _, cif_id2 = get_data(cif_data2)
+
+        atom_fea = torch.block_diag(atom_fea1, atom_fea2)
+        nbr_fea = torch.block_diag(nbr_fea1, nbr_fea2)
+        nbr_fea_idx = torch.block_diag(nbr_fea_idx1, nbr_fea_idx2)
+        return (atom_fea, nbr_fea, nbr_fea_idx), target, cif_id1, cif_id2
+      
+
+       
