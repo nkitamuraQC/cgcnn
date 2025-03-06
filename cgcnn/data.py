@@ -364,6 +364,7 @@ class CIFData(Dataset):
 
         atom_fea = torch.block_diag(atom_fea1, atom_fea2)
         nbr_fea = torch.block_diag(nbr_fea1, nbr_fea2)
+        nbr_fea[nbr_fea == 0] = self.radius + 1.
         nbr_fea_idx = torch.block_diag(nbr_fea_idx1, nbr_fea_idx2)
         return (atom_fea, nbr_fea, nbr_fea_idx), target, cif_id1, cif_id2
       
